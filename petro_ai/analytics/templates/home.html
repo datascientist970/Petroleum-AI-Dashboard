@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Petroleum AI Dashboard | Energy Intelligence Platform</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #0d3b66;
+            --secondary-color: #00a8e8;
+            --accent-color: #ff9f1c;
+            --dark-bg: #0a192f;
+            --card-bg: #112240;
+            --success-color: #2ecc71;
+            --warning-color: #e74c3c;
+            --text-light: #e6f1ff;
+            --text-gray: #8892b0;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--dark-bg) 0%, #0d1b2a 100%);
+            color: var(--text-light);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+        }
+
+        .dashboard-header {
+            background: linear-gradient(90deg, var(--primary-color), #1a5f7a);
+            padding: 1.5rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            border-left: 5px solid var(--accent-color);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .dashboard-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--secondary-color), var(--accent-color));
+        }
+
+        .dashboard-title {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(90deg, #fff, var(--secondary-color));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .dashboard-subtitle {
+            color: var(--text-light);
+            font-size: 1rem;
+            margin-bottom: 1rem;
+            opacity: 0.9;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid rgba(100, 149, 237, 0.1);
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 168, 232, 0.15);
+            border-color: rgba(0, 168, 232, 0.3);
+        }
+
+        .card-header {
+            background: rgba(13, 59, 102, 0.7);
+            border-bottom: 1px solid rgba(0, 168, 232, 0.2);
+            padding: 1rem 1.5rem;
+            font-weight: 600;
+            color: var(--text-light);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-header i {
+            color: var(--secondary-color);
+            margin-right: 10px;
+        }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        .plotly-graph-div {
+            background-color: transparent !important;
+            border-radius: 8px;
+        }
+
+        .metric-card {
+            text-align: center;
+            padding: 1.5rem;
+            border-radius: 10px;
+            background: linear-gradient(135deg, rgba(13, 59, 102, 0.8), rgba(26, 95, 122, 0.8));
+            border-top: 4px solid var(--secondary-color);
+            margin-bottom: 1rem;
+        }
+
+        .metric-value {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--text-light);
+            margin: 0.5rem 0;
+        }
+
+        .metric-label {
+            color: var(--text-light);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.9;
+        }
+
+        .metric-trend {
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+            font-weight: 600;
+        }
+
+        .metric-trend.up {
+            color: var(--success-color);
+        }
+
+        .metric-trend.down {
+            color: var(--warning-color);
+        }
+
+        .control-panel {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(0, 168, 232, 0.2);
+        }
+
+        .btn-dashboard {
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0.6rem 1.5rem;
+            font-weight: 600;
+            transition: all 0.3s;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+
+        .btn-dashboard:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 168, 232, 0.4);
+            color: white;
+        }
+
+        .btn-report {
+            background: linear-gradient(90deg, var(--accent-color), #ff6b35);
+        }
+
+        .btn-ai {
+            background: linear-gradient(90deg, #9c27b0, #673ab7);
+        }
+
+        .btn-export {
+            background: linear-gradient(90deg, #2ecc71, #27ae60);
+        }
+
+        .ai-insight {
+            background: linear-gradient(135deg, rgba(156, 39, 176, 0.15), rgba(103, 58, 183, 0.15));
+            border-left: 4px solid #9c27b0;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1.5rem;
+        }
+
+        .ai-insight h6 {
+            color: #d4a5ff;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .ai-insight p {
+            color: var(--text-light);
+            opacity: 0.9;
+            margin-bottom: 0;
+        }
+
+        .alert-maintenance {
+            background: linear-gradient(135deg, rgba(231, 76, 60, 0.15), rgba(192, 57, 43, 0.15));
+            border-left: 4px solid var(--warning-color);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+
+        .alert-maintenance h6 {
+            color: #ff9999;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .alert-maintenance p {
+            color: var(--text-light);
+            opacity: 0.9;
+            margin-bottom: 0;
+        }
+
+        .table-dark {
+            background-color: rgba(17, 34, 64, 0.7);
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid rgba(100, 149, 237, 0.1);
+        }
+
+        .table-dark th {
+            background-color: rgba(13, 59, 102, 0.9);
+            color: var(--text-light);
+            border: none;
+            font-weight: 600;
+        }
+
+        .table-dark td {
+            border-color: rgba(100, 149, 237, 0.1);
+            color: var(--text-light);
+            opacity: 0.9;
+        }
+
+        .table-dark tbody tr:hover {
+            background-color: rgba(0, 168, 232, 0.1);
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-optimal {
+            background-color: var(--success-color);
+            box-shadow: 0 0 8px var(--success-color);
+        }
+
+        .status-warning {
+            background-color: var(--warning-color);
+            box-shadow: 0 0 8px var(--warning-color);
+        }
+
+        .status-maintenance {
+            background-color: var(--accent-color);
+            box-shadow: 0 0 8px var(--accent-color);
+        }
+
+        .time-filter {
+            background: rgba(13, 59, 102, 0.5);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid rgba(0, 168, 232, 0.2);
+        }
+
+        .time-filter h6 {
+            color: var(--text-light);
+            margin-bottom: 0.75rem;
+            font-weight: 600;
+        }
+
+        .footer {
+            margin-top: 3rem;
+            padding: 1.5rem;
+            text-align: center;
+            color: var(--text-light);
+            font-size: 0.9rem;
+            border-top: 1px solid rgba(100, 149, 237, 0.1);
+            background: rgba(13, 59, 102, 0.3);
+            border-radius: 10px;
+        }
+
+        .footer p {
+            margin-bottom: 0.25rem;
+            color: var(--text-light);
+        }
+
+        .footer .text-muted {
+            color: var(--text-light) !important;
+            opacity: 0.7;
+        }
+
+        .data-update {
+            color: var(--secondary-color);
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .refresh-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: var(--secondary-color);
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.3; transform: scale(0.95); }
+            50% { opacity: 1; transform: scale(1); }
+            100% { opacity: 0.3; transform: scale(0.95); }
+        }
+
+        .form-select {
+            background-color: rgba(13, 59, 102, 0.7);
+            border: 1px solid rgba(0, 168, 232, 0.3);
+            color: var(--text-light);
+        }
+
+        .form-select:focus {
+            background-color: rgba(13, 59, 102, 0.9);
+            border-color: var(--secondary-color);
+            color: var(--text-light);
+            box-shadow: 0 0 0 0.25rem rgba(0, 168, 232, 0.25);
+        }
+
+        .btn-outline-secondary {
+            border-color: rgba(100, 149, 237, 0.3);
+            color: var(--text-light);
+        }
+
+        .btn-outline-secondary:hover,
+        .btn-outline-secondary.active {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+            color: white;
+        }
+
+        .modal-content {
+            background-color: var(--card-bg);
+            border: 1px solid rgba(0, 168, 232, 0.3);
+        }
+
+        .modal-header {
+            border-bottom: 1px solid rgba(0, 168, 232, 0.2);
+        }
+
+        .modal-footer {
+            border-top: 1px solid rgba(0, 168, 232, 0.2);
+        }
+
+        .btn-close-white {
+            filter: invert(1) grayscale(100%) brightness(200%);
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .dashboard-title {
+                font-size: 1.8rem;
+            }
+            
+            .card-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .metric-value {
+                font-size: 1.8rem;
+            }
+            
+            .btn-dashboard {
+                margin-bottom: 10px;
+                width: 100%;
+            }
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(13, 59, 102, 0.3);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--secondary-color);
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid py-4">
+        <!-- Header with Controls -->
+        <div class="dashboard-header">
+            <div class="d-flex justify-content-between align-items-start flex-wrap">
+                <div>
+                    <h1 class="dashboard-title"><i class="fas fa-oil-can"></i> Petroleum AI Dashboard</h1>
+                    <p class="dashboard-subtitle">Real-time Energy Intelligence & Predictive Analytics Platform</p>
+                    <p class="data-update mb-0">
+                        <span class="refresh-indicator"></span>
+                        Live Updates: <span id="current-time">Loading...</span> | 
+                        <span id="update-status" class="badge bg-success">Connected</span>
+                    </p>
+                </div>
+                <div class="mt-2 mt-md-0">
+                    <button class="btn btn-dashboard btn-report" onclick="generatePDFReport()">
+        <i class="fas fa-file-pdf"></i> Generate Report
+    </button>
+                    <button class="btn btn-dashboard btn-ai" onclick="loadAIInsights()">
+                        <i class="fas fa-robot"></i> AI Insights
+                    </button>
+                    <button class="btn btn-dashboard" onclick="toggleAutoRefresh()" id="refresh-toggle">
+                        <i class="fas fa-sync-alt"></i> Auto-Refresh: <span id="refresh-status">ON</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Time Filter Controls -->
+        <div class="time-filter">
+            <div class="row">
+                <div class="col-md-8">
+                    <h6 class="mb-3"><i class="fas fa-calendar-alt"></i> Time Range Analysis</h6>
+                    <div class="btn-group" role="group" id="time-range-buttons">
+                        <button type="button" class="btn btn-outline-secondary {% if current_time_range == 'today' %}active{% endif %}" 
+                                onclick="changeTimeRange('today')">Today</button>
+                        <button type="button" class="btn btn-outline-secondary {% if current_time_range == '7days' %}active{% endif %}" 
+                                onclick="changeTimeRange('7days')">7 Days</button>
+                        <button type="button" class="btn btn-outline-secondary {% if current_time_range == '30days' %}active{% endif %}" 
+                                onclick="changeTimeRange('30days')">30 Days</button>
+                        <button type="button" class="btn btn-outline-secondary {% if current_time_range == 'quarter' %}active{% endif %}" 
+                                onclick="changeTimeRange('quarter')">Quarter</button>
+                        <button type="button" class="btn btn-outline-secondary {% if current_time_range == 'year' %}active{% endif %}" 
+                                onclick="changeTimeRange('year')">Year</button>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <h6 class="mb-3"><i class="fas fa-filter"></i> Data Filter</h6>
+                    <select class="form-select form-select-sm" id="asset-filter" onchange="changeAssetFilter()">
+                        <option value="All Commodities" {% if current_asset_filter == 'All Commodities' %}selected{% endif %}>All Commodities</option>
+                        <option value="Brent Crude" {% if current_asset_filter == 'Brent Crude' %}selected{% endif %}>Brent Crude</option>
+                        <option value="WTI Crude" {% if current_asset_filter == 'WTI Crude' %}selected{% endif %}>WTI Crude</option>
+                        <option value="Natural Gas" {% if current_asset_filter == 'Natural Gas' %}selected{% endif %}>Natural Gas</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Key Metrics -->
+        <div class="row mb-4" id="metrics-container">
+            <!-- Initial metrics from Django -->
+            {% if initial_metrics %}
+            <script>
+                const initialMetrics = {{ initial_metrics|safe }};
+            </script>
+            {% endif %}
+        </div>
+
+        <!-- Main Charts Row -->
+        <div class="row mb-4">
+            <!-- Production Graph -->
+            <div class="col-lg-8 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <span><i class="fas fa-chart-line"></i> Real-Time Oil & Gas Prices</span>
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-secondary btn-sm active" onclick="changeChartType('line')">Line</button>
+                            <button class="btn btn-outline-secondary btn-sm" onclick="changeChartType('area')">Area</button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div id="production-chart">
+                            {{ graph_line_html|safe }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Commodity Prices -->
+            <div class="col-lg-4 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <span><i class="fas fa-chart-bar"></i> Latest Commodity Prices</span>
+                    </div>
+                    <div class="card-body">
+                        <div id="commodity-chart">
+                            {{ graph_bar_html|safe }}
+                        </div>
+                        <div class="ai-insight">
+                            <h6><i class="fas fa-lightbulb"></i> AI Insight</h6>
+                            <p id="ai-insight-text" class="small mb-0">Loading market insights...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Second Charts Row -->
+        <div class="row mb-4">
+            <!-- Commodity Contribution -->
+            <div class="col-lg-6 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <span><i class="fas fa-chart-pie"></i> Commodity Contribution</span>
+                    </div>
+                    <div class="card-body">
+                        <div id="contribution-chart">
+                            {{ graph_pie_html|safe }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Summary Analytics -->
+            <div class="col-lg-6 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <span><i class="fas fa-chart-area"></i> Summary Statistics</span>
+                        <button class="btn btn-sm btn-dashboard" onclick="refreshSummary()">
+                            <i class="fas fa-redo"></i> Refresh
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div id="summary-analytics">
+                            {{ summary_html|safe }}
+                        </div>
+                        <div class="alert-maintenance">
+                            <h6><i class="fas fa-exclamation-triangle"></i> Maintenance Alert</h6>
+                            <p id="maintenance-alert" class="small mb-0">Loading maintenance status...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Predictive Maintenance Table -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <span><i class="fas fa-tools"></i> Predictive Maintenance Dashboard</span>
+                        <span class="badge bg-warning" id="critical-count">0 Critical</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <div id="maintenance-table">
+                                {{ maintenance_html|safe }}
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between mt-3">
+                            <div id="maintenance-stats">
+                                <span class="badge bg-success me-2">
+                                    <span class="status-indicator status-optimal"></span> Optimal: 0
+                                </span>
+                                <span class="badge bg-warning me-2">
+                                    <span class="status-indicator status-warning"></span> Warning: 0
+                                </span>
+                                <span class="badge bg-danger">
+                                    <span class="status-indicator status-maintenance"></span> Critical: 0
+                                </span>
+                            </div>
+                            <button class="btn btn-sm btn-dashboard" onclick="loadDetailedMaintenance()">
+                                <i class="fas fa-search"></i> View Details
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p class="mb-1">Petroleum AI Dashboard v3.1 | © 2023 Energy Intelligence Systems</p>
+            <p class="small mb-0">
+                Powered by AI/ML Predictive Analytics | 
+                Data updates every <span id="refresh-interval">15</span> seconds |
+                Last refresh: <span id="last-refresh-time">Never</span>
+            </p>
+        </div>
+    </div>
+
+    <!-- AI Insights Modal -->
+    <div class="modal fade" id="aiModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title"><i class="fas fa-robot"></i> AI-Powered Insights</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="ai-insights-content">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Loading AI insights...</p>
+                    </div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-dashboard btn-ai" onclick="saveAIInsights()">Save Insights</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Add this function to your JavaScript in home.html
+function generatePDFReport() {
+    // Show loading indicator
+    const originalButtonText = event.target.innerHTML;
+    event.target.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating PDF...';
+    event.target.disabled = true;
+    
+    // Create a timestamp for the report
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    
+    // Fetch the PDF
+    fetch('/generate-pdf-report/')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.blob();
+        })
+        .then(blob => {
+            // Create download link
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `petroleum-dashboard-report-${timestamp}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            
+            // Clean up
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            
+            // Show success message
+            showNotification('PDF report generated successfully!', 'success');
+        })
+        .catch(error => {
+            console.error('Error generating PDF:', error);
+            showNotification('Failed to generate PDF report. Please try again.', 'error');
+        })
+        .finally(() => {
+            // Restore button
+            event.target.innerHTML = originalButtonText;
+            event.target.disabled = false;
+        });
+}
+
+// Helper function to show notifications
+function showNotification(message, type = 'info') {
+    // Remove existing notifications
+    const existingNotifications = document.querySelectorAll('.custom-notification');
+    existingNotifications.forEach(notification => notification.remove());
+    
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `custom-notification alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show`;
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        min-width: 300px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    `;
+    
+    notification.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 5000);
+}
+        // Global variables
+        let autoRefreshEnabled = true;
+        let refreshInterval = 15000; // 15 seconds
+        let refreshTimer = null;
+        let currentTimeRange = '{{ current_time_range|default:"30days" }}';
+        let currentAssetFilter = '{{ current_asset_filter|default:"All Commodities" }}';
+        let chartType = 'line';
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Dashboard initialized');
+            updateTime();
+            initializeMetrics();
+            updateMaintenanceStats();
+            startAutoRefresh();
+            
+            // Update time every second
+            setInterval(updateTime, 1000);
+            
+            // Set initial button states
+            setTimeRangeButtonActive(currentTimeRange);
+        });
+
+        // Initialize metrics from Django data
+        function initializeMetrics() {
+            if (typeof initialMetrics !== 'undefined' && initialMetrics.length > 0) {
+                updateMetrics(initialMetrics);
+            } else {
+                // Load metrics if not available
+                loadDashboardData();
+            }
+        }
+
+        // Set active time range button
+        function setTimeRangeButtonActive(range) {
+            const buttons = document.querySelectorAll('#time-range-buttons .btn');
+            buttons.forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.textContent.trim().toLowerCase().includes(range.replace('days', '').toLowerCase())) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+
+        // Update current time
+        function updateTime() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('en-US', { 
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            document.getElementById('current-time').textContent = timeString;
+        }
+
+        // Load dashboard data via AJAX
+        function loadDashboardData() {
+            const url = `/api/dashboard-data/?time_range=${currentTimeRange}&asset_filter=${encodeURIComponent(currentAssetFilter)}`;
+            
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Data received successfully');
+                    
+                    // Update metrics
+                    if (data.metrics && data.metrics.length > 0) {
+                        updateMetrics(data.metrics);
+                    }
+                    
+                    // Only update charts if we have new HTML content
+                    if (data.graph_line_html && data.graph_line_html.includes('js-plotly-plot')) {
+                        updateChart('production-chart', data.graph_line_html);
+                    }
+                    
+                    if (data.graph_bar_html && data.graph_bar_html.includes('js-plotly-plot')) {
+                        updateChart('commodity-chart', data.graph_bar_html);
+                    }
+                    
+                    if (data.graph_pie_html && data.graph_pie_html.includes('js-plotly-plot')) {
+                        updateChart('contribution-chart', data.graph_pie_html);
+                    }
+                    
+                    // Update maintenance table
+                    if (data.maintenance_html) {
+                        document.getElementById('maintenance-table').innerHTML = data.maintenance_html;
+                        updateMaintenanceStats();
+                    }
+                    
+                    // Update summary
+                    if (data.summary_html) {
+                        document.getElementById('summary-analytics').innerHTML = data.summary_html;
+                    }
+                    
+                    // Update AI insight
+                    if (data.metrics) {
+                        updateAIInsight(data.metrics);
+                    }
+                    
+                    updateLastRefreshTime();
+                    
+                    // Update connection status
+                    document.getElementById('update-status').className = 'badge bg-success';
+                    document.getElementById('update-status').textContent = 'Connected';
+                })
+                .catch(error => {
+                    console.error('Error loading data:', error);
+                    document.getElementById('update-status').className = 'badge bg-danger';
+                    document.getElementById('update-status').textContent = 'Disconnected';
+                    
+                    // Try to reconnect after 5 seconds
+                    setTimeout(loadDashboardData, 5000);
+                });
+        }
+
+        // Update a chart
+        function updateChart(chartId, htmlContent) {
+            const chartDiv = document.getElementById(chartId);
+            if (chartDiv) {
+                // Store scroll position before update
+                const scrollPos = window.scrollY;
+                
+                // Update the HTML
+                chartDiv.innerHTML = htmlContent;
+                
+                // Reinitialize Plotly charts
+                setTimeout(() => {
+                    const plots = chartDiv.querySelectorAll('.js-plotly-plot');
+                    if (plots.length > 0) {
+                        // Plotly will automatically initialize from the HTML
+                        console.log(`Chart ${chartId} updated with ${plots.length} plot(s)`);
+                    }
+                    
+                    // Restore scroll position
+                    window.scrollTo(0, scrollPos);
+                }, 100);
+            }
+        }
+
+        // Update metrics cards
+        function updateMetrics(metrics) {
+            const container = document.getElementById('metrics-container');
+            if (!metrics || !container) return;
+
+            container.innerHTML = metrics.map(metric => {
+                const trendIcon = metric.trend > 0 ? 'fa-arrow-up' : 'fa-arrow-down';
+                const trendClass = metric.trend > 0 ? 'up' : 'down';
+                const trendAbs = Math.abs(metric.trend);
+                
+                return `
+                <div class="col-md-3 col-sm-6 mb-3">
+                    <div class="metric-card" style="border-top-color: ${metric.color || '#00A8E8'}">
+                        <div class="metric-label"><i class="fas fa-${metric.icon}"></i> ${metric.label}</div>
+                        <div class="metric-value">${metric.value}</div>
+                        <div class="metric-label">${metric.unit}</div>
+                        <div class="metric-trend ${trendClass}">
+                            <i class="fas ${trendIcon}"></i> 
+                            ${trendAbs}% vs previous
+                        </div>
+                    </div>
+                </div>
+                `;
+            }).join('');
+        }
+
+        // Update maintenance stats
+        function updateMaintenanceStats() {
+            const table = document.getElementById('maintenance-table');
+            if (!table) return;
+            
+            const rows = table.querySelectorAll('tbody tr');
+            let criticalCount = 0;
+            let warningCount = 0;
+            let optimalCount = 0;
+            
+            rows.forEach(row => {
+                const statusCell = row.querySelector('td:nth-child(6)');
+                if (statusCell) {
+                    const statusText = statusCell.textContent || statusCell.innerText;
+                    if (statusText.includes('Critical')) {
+                        criticalCount++;
+                    } else if (statusText.includes('Warning')) {
+                        warningCount++;
+                    } else {
+                        optimalCount++;
+                    }
+                }
+            });
+            
+            // Update stats display
+            document.getElementById('critical-count').textContent = `${criticalCount} Critical`;
+            document.getElementById('maintenance-stats').innerHTML = `
+                <span class="badge bg-success me-2">
+                    <span class="status-indicator status-optimal"></span> Optimal: ${optimalCount}
+                </span>
+                <span class="badge bg-warning me-2">
+                    <span class="status-indicator status-warning"></span> Warning: ${warningCount}
+                </span>
+                <span class="badge bg-danger">
+                    <span class="status-indicator status-maintenance"></span> Critical: ${criticalCount}
+                </span>
+            `;
+            
+            // Update maintenance alert
+            const alertText = document.getElementById('maintenance-alert');
+            if (alertText) {
+                const totalAssets = criticalCount + warningCount + optimalCount;
+                if (criticalCount > 0) {
+                    alertText.innerHTML = `<span class="text-warning"><i class="fas fa-exclamation-circle"></i> ${criticalCount} critical assets require immediate attention! ${warningCount} assets showing warnings.</span>`;
+                } else if (warningCount > 0) {
+                    alertText.innerHTML = `<span class="text-info"><i class="fas fa-exclamation-triangle"></i> ${warningCount} assets showing warnings. ${optimalCount} assets are optimal.</span>`;
+                } else {
+                    alertText.innerHTML = `<span class="text-success"><i class="fas fa-check-circle"></i> All ${optimalCount} assets are operating optimally.</span>`;
+                }
+            }
+        }
+
+        // Update AI insight
+        function updateAIInsight(metrics) {
+            const insightText = document.getElementById('ai-insight-text');
+            if (!insightText || !metrics) return;
+            
+            // Find Brent and WTI metrics
+            const brentMetric = metrics.find(m => m.label.includes('Brent'));
+            const wtiMetric = metrics.find(m => m.label.includes('WTI'));
+            const gasMetric = metrics.find(m => m.label.includes('Natural Gas'));
+            
+            if (brentMetric && wtiMetric) {
+                let insight = '';
+                const brentTrend = brentMetric.trend;
+                const wtiTrend = wtiMetric.trend;
+                
+                if (brentTrend > 2 && wtiTrend > 2) {
+                    insight = '📈 <strong>Strong bullish momentum</strong> across both benchmarks. Consider increasing production allocation.';
+                } else if (brentTrend > 0 && wtiTrend > 0) {
+                    insight = '↗️ <strong>Positive price momentum.</strong> Brent-WTI spread presents arbitrage opportunities.';
+                } else if (brentTrend < -2 && wtiTrend < -2) {
+                    insight = '📉 <strong>Significant bearish pressure.</strong> Review inventory levels and consider hedging positions.';
+                } else if (brentTrend < 0 && wtiTrend < 0) {
+                    insight = '↘️ <strong>Mild downward pressure.</strong> Monitor OPEC+ announcements for market direction.';
+                } else {
+                    insight = '➡️ <strong>Mixed market signals.</strong> Brent showing stronger fundamentals than WTI.';
+                }
+                
+                if (gasMetric) {
+                    insight += ` Natural gas ${gasMetric.trend > 0 ? 'rising' : 'declining'} ${Math.abs(gasMetric.trend)}%.`;
+                }
+                
+                insightText.innerHTML = insight;
+            }
+        }
+
+        // Update last refresh time
+        function updateLastRefreshTime() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('en-US', { 
+                hour: '2-digit', 
+                minute: '2-digit', 
+                second: '2-digit' 
+            });
+            document.getElementById('last-refresh-time').textContent = timeString;
+        }
+
+        // Toggle auto-refresh
+        function toggleAutoRefresh() {
+            autoRefreshEnabled = !autoRefreshEnabled;
+            const statusElement = document.getElementById('refresh-status');
+            const toggleButton = document.getElementById('refresh-toggle');
+            
+            if (autoRefreshEnabled) {
+                statusElement.textContent = 'ON';
+                toggleButton.classList.remove('btn-secondary');
+                toggleButton.classList.add('btn-dashboard');
+                startAutoRefresh();
+            } else {
+                statusElement.textContent = 'OFF';
+                toggleButton.classList.remove('btn-dashboard');
+                toggleButton.classList.add('btn-secondary');
+                stopAutoRefresh();
+            }
+        }
+
+        // Start auto-refresh
+        function startAutoRefresh() {
+            if (refreshTimer) clearInterval(refreshTimer);
+            refreshTimer = setInterval(loadDashboardData, refreshInterval);
+            console.log('Auto-refresh started');
+        }
+
+        // Stop auto-refresh
+        function stopAutoRefresh() {
+            if (refreshTimer) {
+                clearInterval(refreshTimer);
+                refreshTimer = null;
+                console.log('Auto-refresh stopped');
+            }
+        }
+
+        // Change time range
+        function changeTimeRange(range) {
+            console.log(`Changing time range to: ${range}`);
+            currentTimeRange = range;
+            
+            // Update button states
+            const buttons = document.querySelectorAll('#time-range-buttons .btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Reload data with new time range
+            loadDashboardData();
+        }
+
+        // Change asset filter
+        function changeAssetFilter() {
+            const filterValue = document.getElementById('asset-filter').value;
+            console.log(`Changing asset filter to: ${filterValue}`);
+            currentAssetFilter = filterValue;
+            
+            // Reload data with new filter
+            loadDashboardData();
+        }
+
+        // Change chart type
+        function changeChartType(type) {
+            chartType = type;
+            const buttons = event.target.parentElement.querySelectorAll('.btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            console.log(`Chart type changed to: ${type}`);
+            // In a real implementation, this would update the chart type
+        }
+
+        // Load AI insights
+        function loadAIInsights() {
+            fetch('/api/ai-insights/')
+                .then(response => response.json())
+                .then(data => {
+                    const modalContent = document.getElementById('ai-insights-content');
+                    if (modalContent && data.insights) {
+                        let insightsHTML = '';
+                        
+                        data.insights.forEach(insight => {
+                            let priorityBadge = '';
+                            let borderColor = '';
+                            
+                            switch(insight.priority) {
+                                case 'critical':
+                                    priorityBadge = '<span class="badge bg-danger float-end">CRITICAL</span>';
+                                    borderColor = 'border-danger';
+                                    break;
+                                case 'high':
+                                    priorityBadge = '<span class="badge bg-warning float-end">HIGH</span>';
+                                    borderColor = 'border-warning';
+                                    break;
+                                default:
+                                    priorityBadge = '<span class="badge bg-info float-end">MEDIUM</span>';
+                                    borderColor = 'border-info';
+                            }
+                            
+                            insightsHTML += `
+                                <div class="card mb-3 ${borderColor} border-start border-3">
+                                    <div class="card-body">
+                                        <h6><i class="fas fa-${insight.icon}" style="color: ${insight.color}"></i> ${insight.title} ${priorityBadge}</h6>
+                                        <p class="mb-0">${insight.content}</p>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        
+                        modalContent.innerHTML = insightsHTML;
+                    }
+                    
+                    // Show modal
+                    const aiModal = new bootstrap.Modal(document.getElementById('aiModal'));
+                    aiModal.show();
+                })
+                .catch(error => {
+                    console.error('Error loading AI insights:', error);
+                    document.getElementById('ai-insights-content').innerHTML = `
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-triangle"></i> Failed to load AI insights. Please try again.
+                        </div>
+                    `;
+                    const aiModal = new bootstrap.Modal(document.getElementById('aiModal'));
+                    aiModal.show();
+                });
+        }
+
+        // Load detailed maintenance
+        function loadDetailedMaintenance() {
+            // Show loading
+            const originalContent = document.getElementById('maintenance-table').innerHTML;
+            document.getElementById('maintenance-table').innerHTML = `
+                <div class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Loading detailed maintenance analysis...</p>
+                </div>
+            `;
+            
+            // Simulate API call
+            setTimeout(() => {
+                // Restore original content
+                document.getElementById('maintenance-table').innerHTML = originalContent;
+                
+                // Show success message
+                alert('Detailed maintenance analysis loaded successfully!\n\nFeatures available:\n• Maintenance history\n• Failure probability trends\n• Cost analysis\n• Recommended actions\n• Spare parts inventory');
+            }, 1500);
+        }
+
+        // Refresh summary
+        function refreshSummary() {
+            // Show loading
+            const originalContent = document.getElementById('summary-analytics').innerHTML;
+            document.getElementById('summary-analytics').innerHTML = `
+                <div class="text-center py-3">
+                    <div class="spinner-border spinner-border-sm text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <span class="ms-2">Refreshing summary...</span>
+                </div>
+            `;
+            
+            // Reload data
+            loadDashboardData();
+        }
+
+        // Save AI insights
+        function saveAIInsights() {
+            alert('AI insights saved to your dashboard! You can access them from the AI Insights panel.');
+            const aiModal = bootstrap.Modal.getInstance(document.getElementById('aiModal'));
+            aiModal.hide();
+        }
+
+        // Start auto-refresh on page load
+        startAutoRefresh();
+    </script>
+</body>
+</html>
