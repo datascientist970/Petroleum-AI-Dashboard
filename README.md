@@ -1,269 +1,82 @@
 # Petroleum AI Dashboard
 
-## 📋 **Project Overview**
-Petroleum AI Dashboard is a sophisticated, real-time monitoring system designed for the petroleum industry. It combines data analytics, artificial intelligence, and predictive maintenance to provide actionable insights for energy companies, refineries, and commodity traders.
+> A real-time Django dashboard for oil & gas monitoring — live Brent, WTI and Natural Gas tracking, Prophet production forecasting, predictive-maintenance demos, MQTT data ingestion and one-click PDF executive reports.
 
-## 🎯 **Core Theory & Concept**
+![Python](https://img.shields.io/badge/Python-3.x-3776AB?logo=python&logoColor=white)
+![Django](https://img.shields.io/badge/Django-Web%20App-092E20?logo=django&logoColor=white)
+![Plotly](https://img.shields.io/badge/Plotly-Interactive%20Charts-3F4F75?logo=plotly&logoColor=white)
+![MQTT](https://img.shields.io/badge/MQTT-Live%20Ingestion-660066?logo=mqtt&logoColor=white)
 
-### **Problem Statement**
-The petroleum industry faces challenges in:
-- Real-time monitoring of volatile commodity prices
-- Predictive maintenance of expensive equipment
-- Operational efficiency optimization
-- Data-driven decision making
+## Overview
 
-### **Solution Architecture**
-The dashboard provides:
-1. **Real-time Analytics**: Live tracking of Brent, WTI, and Natural Gas prices
-2. **Predictive Maintenance**: AI-driven equipment failure prediction
-3. **Operational Intelligence**: Data-driven recommendations
-4. **Automated Reporting**: PDF generation with executive insights
+The Petroleum AI Dashboard brings commodity monitoring and operational analytics into a single web interface. It tracks Brent crude, WTI crude and Natural Gas data over selectable time ranges, visualises trends with interactive Plotly charts, exposes JSON APIs for dashboard data and AI insights, can ingest live sensor-style data over MQTT, and generates formatted PDF reports with ReportLab.
 
-### **Technology Stack**
-- **Backend**: Django (Python) for business logic and API
-- **Frontend**: HTML5, CSS3, JavaScript with Bootstrap 5
-- **Visualization**: Plotly.js for interactive charts
-- **Reporting**: ReportLab for PDF generation
-- **Data Processing**: Pandas, NumPy
+Where no live feed is connected, the dashboard generates realistic sample data so every feature can be explored immediately.
 
-## 📦 **Requirements**
+## Key Features
 
-### **System Requirements**
-- Python 3.8 or higher
-- Django 4.0+
-- Modern web browser (Chrome, Firefox, Edge)
-- 4GB RAM minimum
-- 500MB free disk space
+- **Real-time commodity dashboard** — line, bar and pie charts (Plotly) for Brent, WTI and Natural Gas, with time-range selectors (today / 7 / 30 days / quarter / year) and an asset filter
+- **JSON APIs** — `api/dashboard-data/` for chart data and metrics, `api/ai-insights/` for insight summaries, designed for auto-refreshing front ends
+- **Production forecasting** — Prophet-based forecasting of numeric production series (10-day horizon) in `analytics/utils.py`
+- **Predictive-maintenance demo** — a demo module that attaches failure-probability estimates to operational data for evaluation of the workflow
+- **MQTT live ingestion** — a Paho MQTT client subscribes to the `oil_gas/sensors` topic and appends incoming price payloads to `realtime_data.csv`
+- **PDF executive reports** — one-click ReportLab reports with summary tables
+- **Summary metrics** — current values, changes and aggregate metrics calculated per selected range and asset
 
-### **Python Dependencies**
-- Django 4.2.0
-- pandas 2.0.3
-- numpy 1.24.3
-- plotly 5.15.0
-- reportlab 4.0.4
+## Tech Stack
 
-### **Frontend Dependencies**
-- Bootstrap 5.3.0
-- Font Awesome 6.4.0
-- Plotly.js (latest)
-- jQuery (via Bootstrap)
+- **Backend:** Django (Python)
+- **Data:** Pandas, NumPy
+- **Forecasting:** Prophet
+- **Visualisation:** Plotly (Python + Plotly.js), Bootstrap 5, Font Awesome
+- **Live Data:** Paho MQTT (HiveMQ public broker for testing)
+- **Reporting:** ReportLab
+- **Database:** SQLite (development)
 
-## 🚀 **Clone & Setup**
+## Project Structure
 
-### **Step 1: Clone the Repository**
-```
-git clone https://github.com/yourusername/petroleum-ai-dashboard.git
-cd petroleum-ai-dashboard
+```text
+Petroleum-AI-Dashboard/
+└── petro_ai/
+    ├── manage.py
+    ├── petro_ai/               # Django project settings & URLs
+    └── analytics/              # Analytics app
+        ├── views.py            # Dashboard, APIs, charts, PDF report
+        ├── utils.py            # Prophet forecasting & maintenance demo
+        ├── mqtt_client.py      # MQTT subscriber → realtime_data.csv
+        ├── mqtt_publisher.py   # MQTT test publisher
+        ├── realtime_data.csv   # Ingested / sample time-series data
+        ├── urls.py
+        └── templates/home.html # Dashboard UI
 ```
 
-### **Step 2: Set Up Virtual Environment**
-```
-python -m venv venv
-source venv/bin/activate   # On Windows: venv\Scripts\activate
-```
+## Getting Started
 
-### **Step 3: Install Dependencies**
-```
-pip install django pandas numpy plotly reportlab
-```
-
-### **Step 4: Run Server**
-```
+```bash
+git clone https://github.com/datascientist970/Petroleum-AI-Dashboard.git
+cd Petroleum-AI-Dashboard/petro_ai
+pip install django pandas numpy plotly reportlab prophet paho-mqtt
 python manage.py migrate
 python manage.py runserver
 ```
 
-### **Step 5: Access Dashboard**
-Open browser and navigate to: `http://127.0.0.1:8000/`
+Open `http://127.0.0.1:8000/` to view the dashboard.
 
+## Usage
 
-#### **2. Time Filter Controls**
-```
-TIME RANGE SELECTOR
-┌─────────────────────────────────────┐
-│ [●] Today    [ ] 7 Days             │
-│ [ ] 30 Days  [ ] Quarter  [ ] Year  │
-└─────────────────────────────────────┘
+- **Explore:** change the time range or asset filter — charts, metrics and insights update through the JSON APIs.
+- **Generate a report:** use the PDF report action (`/generate-pdf-report/`) for a downloadable executive summary.
+- **Stream live data (optional):** run the MQTT publisher / client pair to append sensor payloads to `realtime_data.csv`:
 
-ASSET FILTER DROPDOWN
-┌──────────────────────────┐
-│ ▼ All Commodities       │
-├──────────────────────────┤
-│ • Brent Crude           │
-│ • WTI Crude             │
-│ • Natural Gas           │
-└──────────────────────────┘
+```bash
+python analytics/mqtt_publisher.py   # publish test payloads
+python analytics/mqtt_client.py      # subscribe and store them
 ```
 
-#### **4. Control Panel**
-```
-CONTROL BUTTONS
-┌─────────────────────────────────────┐
-│ [📄] Generate PDF Report           │
-│ [🤖] AI Insights                   │
-│ [🔄] Auto-Refresh: ON              │
-│ [📥] Export Data                   │
-└─────────────────────────────────────┘
-```
+## Author
 
-### **Visual Design Elements**
+**Muhammad Dawood** — AI & Data Science Engineer
+GitHub: https://github.com/datascientist970 · Mardan, Pakistan
+LinkedIn: https://www.linkedin.com/in/dawood406/
 
-#### **Color Scheme**
-```
-┌─────────────────────────────────────────────────────┐
-│ PRIMARY COLORS                                      │
-│ • Header Gradient: #0d3b66 → #1a5f7a               │
-│ • Accent Border: #ff9f1c (orange)                  │
-│ • Card Background: #112240 (dark blue)             │
-│ • Text: #e6f1ff (light blue/white)                 │
-│                                                    │
-│ STATUS INDICATORS                                  │
-│ • Success: #2ecc71 (green)     [✅ Optimal]       │
-│ • Warning: #e74c3c (red)       [⚠️ Warning]       │
-│ • Critical: #ff9f1c (orange)   [🔥 Critical]      │
-│ • Info: #00a8e8 (blue)         [ℹ️ Info]          │
-└─────────────────────────────────────────────────────┘
-```
-
-#### **Chart Types & Visualization**
-```
-CHARTS AVAILABLE
-1. LINE CHART
-   • Multi-line trends
-   • Date range selector
-   • Hover details
-   • Zoom/pan controls
-
-2. BAR CHART
-   • Latest prices comparison
-   • Color-coded by commodity
-   • Value labels
-
-3. PIE CHART
-   • Market share distribution
-   • Interactive legend
-   • Percentage labels
-```
-
-#### **Data Presentation**
-```
-METRIC CARDS LAYOUT
-┌─────────────────────────────┐
-│ [Icon] Label                │
-│        Large Value          │
-│        Unit                 │
-│        Trend: ↑↓ %          │
-└─────────────────────────────┘
-
-MAINTENANCE TABLE
-┌─────┬──────────┬───────┬────────┬─────────┬───────┐
-│ ID  │ Asset    │Health │ Status │ Failure │ Time  │
-├─────┼──────────┼───────┼────────┼─────────┼───────┤
-│ Badges: ●Optimal ●Warning ●Critical            │
-│ Statistics: 4 Optimal | 3 Warning | 3 Critical │
-└─────────────────────────────────────────────────┘
-```
-
-### **Mobile Responsive View**
-```
-MOBILE LAYOUT (Single Column)
-┌─────────────────────────┐
-│ Petroleum AI Dashboard  │
-├─────────────────────────┤
-│ [Metric Card 1]         │
-│ [Metric Card 2]         │
-│ [Metric Card 3]         │
-│ [Metric Card 4]         │
-├─────────────────────────┤
-│ [Full-width Line Chart] │
-├─────────────────────────┤
-│ [Bar Chart]             │
-│ [AI Insight Box]        │
-├─────────────────────────┤
-│ [Pie Chart]             │
-│ [Summary Table]         │
-├─────────────────────────┤
-│ [Maintenance Table]     │
-│ [Scrollable]            │
-└─────────────────────────┘
-```
-
-### **PDF Report Preview**
-```
-PDF REPORT STRUCTURE
-┌─────────────────────────────────────┐
-│ PETROLEUM AI DASHBOARD REPORT      │
-│ Generated: [Date Time]             │
-├─────────────────────────────────────┤
-│ EXECUTIVE SUMMARY                  │
-│ • Market overview                  │
-│ • Key findings                     │
-│ • Recommendations                  │
-├─────────────────────────────────────┤
-│ KEY METRICS TABLE                  │
-│ • Commodity prices                 │
-│ • Production stats                 │
-│ • Efficiency scores                │
-├─────────────────────────────────────┤
-│ MAINTENANCE STATUS                 │
-│ • Asset health breakdown           │
-│ • Critical issues                  │
-│ • Action items                     │
-├─────────────────────────────────────┤
-│ AI RECOMMENDATIONS                 │
-│ • Priority actions                 │
-│ • Timeline                         │
-│ • Expected impact                  │
-└─────────────────────────────────────┘
-```
-
-## 🎨 **UI/UX Features**
-
-### **Interactive Elements**
-- **Live Updates**: Data refreshes every 15 seconds
-- **Hover Effects**: Cards and charts have hover animations
-- **Click Actions**: Interactive charts with tooltips
-- **Modal Windows**: AI insights in popup modals
-- **Dropdown Filters**: Asset and time range selectors
-
-### **Visual Indicators**
-- **Trend Arrows**: Up/down indicators for metrics
-- **Color Coding**: Status-based color schemes
-- **Progress Bars**: Health scores visualization
-- **Badges**: Priority and status badges
-- **Icons**: Font Awesome icons throughout
-
-### **Navigation & Controls**
-- **Time Range Buttons**: Quick period selection
-- **Refresh Toggle**: Enable/disable auto-refresh
-- **Export Options**: PDF and data export
-- **Filter Controls**: Asset-specific filtering
-- **View Details**: Drill-down capabilities
-
-## 📊 **Data Flow Architecture**
-```
-DATA SOURCES → BACKEND PROCESSING → FRONTEND DISPLAY → USER INTERACTION
-    CSV           Django Views        HTML/CSS/JS        Filters/Controls
-    APIs           Pandas/Numpy       Plotly Charts      PDF Generation
-    Real-time      AI Algorithms      Bootstrap UI       Export Functions
-```
-
-## 🔄 **Update Cycle**
-```
-EVERY 15 SECONDS:
-1. Fetch new data from CSV/APIs
-2. Process with Pandas/NumPy
-3. Generate updated charts
-4. Refresh metrics display
-5. Update maintenance status
-6. Trigger AI analysis
-```
-
-## 🎯 **Target Users**
-- **Energy Analysts**: Market trend analysis
-- **Operations Managers**: Equipment monitoring
-- **Traders**: Commodity price tracking
-- **Executives**: Executive reporting
-- **Maintenance Teams**: Predictive maintenance alerts
-
-This dashboard represents a complete, professional solution for petroleum industry analytics with modern UI/UX, real-time capabilities, and actionable intelligence.
+⭐ If you find this project useful, consider giving it a star.
